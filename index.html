@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker en Espiral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="flex flex-col items-center py-8 bg-gradient-to-b from-green-900 to-green-950 min-h-screen">
+    <div class="max-w-6xl w-full px-4">
+        <h1 class="text-4xl md:text-5xl text-center mb-2 font-serif font-bold text-white">Poker en Espiral</h1>
+        <p class="text-center text-xl mb-6 text-green-200">Juego de Solitario con Baraja de Poker</p>
+        
+        <div class="flex flex-col lg:flex-row gap-8 items-center">
+            <div class="w-full lg:w-2/3 flex justify-center">
+                <div class="relative rounded-2xl bg-green-800 border-8 border-amber-800 shadow-lg" 
+                     style="width: 550px; height: 550px;">
+                    <div id="gameArea" class="relative w-full h-full"></div>
+                </div>
+            </div>
+            
+            <div class="w-full lg:w-1/3 p-6 rounded-2xl bg-black bg-opacity-30 backdrop-blur-sm">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-3 text-white">Instrucciones</h2>
+                    <ul class="space-y-2 text-gray-200">
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-circle text-xs mt-1.5 text-green-400"></i>
+                            <span>Haz clic en "Barajar" para mezclar las cartas</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-circle text-xs mt-1.5 text-green-400"></i>
+                            <span>Presiona "Repartir" para colocar las cartas</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-circle text-xs mt-1.5 text-green-400"></i>
+                            <span>Haz clic en una carta para moverla</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-circle text-xs mt-1.5 text-green-400"></i>
+                            <span>Gana ordenando todos los montones</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fas fa-circle text-xs mt-1.5 text-green-400"></i>
+                            <span>Pierdes si el Rey (K) bloquea el juego</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold mb-3 text-white">Controles</h2>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button id="btnShuffle" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fas fa-random"></i> <span>Barajar</span>
+                        </button>
+                        <button id="btnDeal" class="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fas fa-cards"></i> <span>Repartir</span>
+                        </button>
+                        <button id="btnReset" class="bg-amber-600 hover:bg-amber-700 text-white py-3 px-4 rounded-lg transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fas fa-redo"></i> <span>Reiniciar</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="gameStatus" class="text-center p-4 rounded-lg bg-black bg-opacity-40">
+                    <p id="statusText" class="text-xl text-white mb-2">Preparado para comenzar</p>
+                    <div id="winMessage" class="hidden mt-3 p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white">
+                        <h3 class="text-2xl font-bold">¡Felicidades!</h3>
+                        <p>Has completado todos los montones</p>
+                    </div>
+                    <div id="loseMessage" class="hidden mt-3 p-3 bg-gradient-to-r from-red-500 to-red-700 rounded-lg text-white">
+                        <h3 class="text-2xl font-bold">¡Juego terminado!</h3>
+                        <p>El Rey bloqueó el juego</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
