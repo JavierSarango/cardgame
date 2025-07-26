@@ -114,19 +114,13 @@ function createStacks() {
 }
 
 // Crear elemento de carta
-function createCardElement(card, isFaceUp = false) {
+function createCardElement(card) {
     const cardEl = document.createElement('div');
-    cardEl.className = 'card';
+    cardEl.className = 'card flipped'; // Iniciar boca abajo
     
-    // Asignar imágenes
     const frontImagePath = `assets/images/front/${card.numericValue}_${card.suit}.png`;
     const backImagePath = 'assets/images/back/card_back.png';
     
-    // Verifica rutas en consola (para debug)
-    //console.log('Buscando imagen frontal en:', frontImagePath);
-    //console.log('Buscando imagen trasera en:', backImagePath);
-    
-    // Crea elementos de imagen
     const front = document.createElement('div');
     front.className = 'card-face card-front';
     front.style.backgroundImage = `url('${frontImagePath}')`;
@@ -137,16 +131,6 @@ function createCardElement(card, isFaceUp = false) {
     
     cardEl.appendChild(front);
     cardEl.appendChild(back);
-     // Inicialmente mostrar el reverso
-    if (!isFaceUp) {
-        cardEl.classList.add('flipped');
-    }
-    // Evento para mover carta
-    // cardEl.addEventListener('click', () => {
-    //     if (gameState === 'playing') {
-    //         moveCardToStack(card);
-    //     }
-    // });
     
     return cardEl;
 }
@@ -286,43 +270,52 @@ function moveCardToStack(card) {
     const targetStackId = card.numericValue;
     const targetStack = stacks[targetStackId];
     
-    // Verificar que es la carta superior
     if (sourceStack.cards[sourceStack.cards.length - 1] !== card) {
         statusText.textContent = 'Solo puedes mover la carta superior del montón';
         return;
     }
-    
-    // Animación de movimiento
-    sourceStack.cards.pop();
-    movesCount++;
-    targetStack.cards.push(card);
-    
-    const cardEl = card.element;
-    const targetX = targetStack.position.x;
-    const targetY = targetStack.position.y + ((targetStack.cards.length - 1) * 15); // Posición en escalera
-    
-    cardEl.style.zIndex = 1000; // Asegurar que está por encima durante el movimiento
-    
-    cardEl.style.transition = 'all 0.5s ease';
-    cardEl.style.left = `${targetX}px`;
-    cardEl.style.top = `${targetY}px`;
-    
-    cardEl.addEventListener('transitionend', () => {
-        cardEl.style.transition = '';
-        cardEl.style.zIndex = targetStack.cards.length - 1;
-        
-        // Voltear la nueva carta superior en el stack de origen
-        if (sourceStack.cards.length > 0) {
-            const newTopCard = sourceStack.cards[sourceStack.cards.length - 1];
-            setTimeout(() => {
-                newTopCard.element.classList.remove('flipped');
-            }, 300);
-        }
-        
-        checkGameStatus(card);
-    }, {once: true});
-}
 
+    console.log('Carta seleccionada:', {
+        valor: card.value, 
+        palo: card.suit,
+        valorNumerico: card.numericValue
+    });
+
+    // Desactivar clic temporalmente
+    card.element.style.pointerEvents = 'none';
+
+    // Voltear la carta (mostrar frente)
+    card.element.classList.remove('flipped');
+    
+    // Usar setTimeout para sincronizar con la animación CSS
+    setTimeout(() => {
+        // Mover la carta después del volteo
+        sourceStack.cards.pop();
+        targetStack.cards.push(card);
+        
+        const cardEl = card.element;
+        const targetX = targetStack.position.x;
+        const targetY = targetStack.position.y + ((targetStack.cards.length - 1) * 15);
+        
+        cardEl.style.transition = 'left 0.5s ease, top 0.5s ease';
+        cardEl.style.left = `${targetX}px`;
+        cardEl.style.top = `${targetY}px`;
+        
+        cardEl.addEventListener('transitionend', () => {
+            // Restaurar interacción
+            cardEl.style.pointerEvents = 'auto';
+            cardEl.style.transition = 'transform 0.6s ease';
+            
+            // Mostrar nueva carta superior si existe
+            if (sourceStack.cards.length > 0) {
+                const newTopCard = sourceStack.cards[sourceStack.cards.length - 1];
+                newTopCard.element.classList.remove('flipped');
+            }
+            
+            checkGameStatus(card);
+        }, { once: true });
+    }, 600); // Tiempo igual a la duración del volteo
+}
 // Funciones auxiliares
 function findCardStack(card) {
     return Object.values(stacks).find(stack => stack.cards.includes(card));
