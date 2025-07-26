@@ -1,6 +1,6 @@
 :root {
-    --card-width: 90px;
-    --card-height: 126px;
+    --card-width: 70px;
+    --card-height: 100px;
     --card-radius: 8px;
     --transition-speed: 0.4s;
 }
@@ -40,7 +40,7 @@
 
 .card-front {
     background-image: var(--front-image);
-    transform: rotateY(0deg);
+    transform: rotateY(180deg);
 }
 
 .card-back {
@@ -66,23 +66,23 @@
 
 /* Estilos de los montones */
 .stack {
-    width: var(--card-width);
-    height: var(--card-height);
+    width: 70px;
+    height: 140px;
     position: absolute;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-weight: bold;
+    // font-weight: bold;
     font-size: 1.8rem;
     color: rgba(255,255,255,0.8);
     background: rgba(0,0,0,0.2);
-    border: 2px dashed rgba(255,255,255,0.2);
+    // border: 2px dashed rgba(255,255,255,0.2);
     border-radius: var(--card-radius);
     z-index: 1;
 }
 
 .stack::after {
-    content: attr(id);
+    // content: attr(id);
     position: absolute;
     color: white;
     font-size: 1rem;
@@ -110,7 +110,7 @@
 }
 
 #stack13::after {
-    content: 'K';
+    // content: 'K';
     bottom: -25px;
 }
 

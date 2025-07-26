@@ -3,27 +3,27 @@ const suits = ['heart', 'diamond', 'club', 'spade'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const stackPositions = [
     // Fila superior
-    {id: 1, x: 30, y: 30},
-    {id: 2, x: 160, y: 30},
-    {id: 3, x: 290, y: 30},
-    {id: 4, x: 420, y: 30},
+    {id: 1, x: 30, y: 15},
+    {id: 2, x: 220, y: 15},
+    {id: 3, x: 420, y: 15},
+    {id: 4, x: 600, y: 15},
     
     // Lado derecho
-    {id: 5, x: 420, y: 160},
-    {id: 6, x: 420, y: 290},
-    {id: 7, x: 420, y: 420},
+    {id: 5, x: 600, y: 180},
+    {id: 6, x: 600, y: 350},
+    {id: 7, x: 600, y: 520},
     
     // Fila inferior
-    {id: 8, x: 290, y: 420},
-    {id: 9, x: 160, y: 420},
-    {id: 10, x: 30, y: 420},
+    {id: 8, x: 420, y: 520},
+    {id: 9, x: 220, y: 520},
+    {id: 10, x: 30, y: 520},
     
     // Lado izquierdo
-    {id: 11, x: 30, y: 290},
-    {id: 12, x: 30, y: 160},
+    {id: 11, x: 30, y: 350},
+    {id: 12, x: 30, y: 180},
     
     // Centro
-    {id: 13, x: 225, y: 225}
+    {id: 13, x: 320, y: 280}
 ];
 
 // Precarga de imágenes
@@ -98,7 +98,7 @@ function createStacks() {
         const stack = document.createElement('div');
         stack.className = 'stack';
         stack.id = `stack${pos.id}`;
-        stack.textContent = pos.id === 13 ? 'K' : pos.id;
+        // stack.textContent = pos.id === 13 ? 'K' : pos.id;
         stack.style.left = `${pos.x}px`;
         stack.style.top = `${pos.y}px`;
         gameArea.appendChild(stack);
@@ -114,7 +114,7 @@ function createStacks() {
 }
 
 // Crear elemento de carta
-function createCardElement(card) {
+function createCardElement(card, isFaceUp = false) {
     const cardEl = document.createElement('div');
     cardEl.className = 'card';
     
@@ -137,13 +137,16 @@ function createCardElement(card) {
     
     cardEl.appendChild(front);
     cardEl.appendChild(back);
-    
+     // Inicialmente mostrar el reverso
+    if (!isFaceUp) {
+        cardEl.classList.add('flipped');
+    }
     // Evento para mover carta
-    cardEl.addEventListener('click', () => {
-        if (gameState === 'playing') {
-            moveCardToStack(card);
-        }
-    });
+    // cardEl.addEventListener('click', () => {
+    //     if (gameState === 'playing') {
+    //         moveCardToStack(card);
+    //     }
+    // });
     
     return cardEl;
 }
@@ -195,21 +198,25 @@ function shuffleDeck() {
 }
 
 // Repartir cartas
-// Repartir cartas
+
 function dealCards() {
     updateGameState('dealing');
     statusText.textContent = 'Repartiendo cartas...';
     
-    // Limpiar los stacks
+     // Limpiar los stacks
     Object.values(stacks).forEach(stack => {
         stack.cards = [];
+        stack.element.innerHTML = stack.id === 13 ? 'K' : stack.id; // Restaurar texto del stack
     });
     
     // Barajar nuevamente antes de repartir
     shuffleArray(deck);
     
     // Distribución mejorada
+    // Distribución mejorada
     let cardIndex = 0;
+    const CARD_OFFSET = 15; // Pixeles de separación para el efecto escalera
+    
     for (let i = 0; i < 4; i++) {
         for (let stackId = 1; stackId <= 13; stackId++) {
             if (cardIndex >= deck.length) break;
@@ -218,40 +225,33 @@ function dealCards() {
             const stack = stacks[stackId];
             stack.cards.push(card);
             
-            const cardEl = createCardElement(card);
+            const cardEl = createCardElement(card, false); // Todas comienzan boca abajo
             card.element = cardEl;
             gameArea.appendChild(cardEl);
             
             const targetX = stack.position.x;
-            const targetY = stack.position.y;
-            const rotation = Math.random() * 20 - 10;
+            const targetY = stack.position.y + (i * CARD_OFFSET); // Efecto escalera
             
+            cardEl.style.left = `${targetX}px`;
+            cardEl.style.top = `${targetY}px`;
+            cardEl.style.zIndex = i; // Asegurar orden de apilamiento
+            
+            // Animación de reparto
             cardEl.style.setProperty('--startX', `-${targetX}px`);
             cardEl.style.setProperty('--startY', `-${targetY}px`);
-            cardEl.style.setProperty('--rotation', `${rotation}deg`);
+            cardEl.classList.add('dealCard');
             
-            cardEl.classList.add('card-flip');
-            
-            setTimeout(() => {
-                cardEl.style.setProperty('--startX', '0');
-                cardEl.style.setProperty('--startY', '0');
-                cardEl.classList.add('dealCard');
-                
-                cardEl.addEventListener('animationend', () => {
-                    cardEl.classList.remove('dealCard');
-                    cardEl.style.left = `${targetX}px`;
-                    cardEl.style.top = `${targetY}px`;
-                    cardEl.style.transform = `rotate(${rotation}deg)`;
-                    
-                    if (i === 3) {
-                        setTimeout(() => {
-                            cardEl.classList.add('flipped');
-                        }, 100);
+            // Configurar evento de clic solo para la última carta añadida
+            if (i === 3) {
+                cardEl.addEventListener('click', () => {
+                    if (gameState === 'playing') {
+                        moveCardToStack(card);
                     }
-                }, {once: true});
-            }, i * 50 + stackId * 10);
+                });
+            }
         }
     }
+    
     
     // Actualizar el mazo después de repartir
     deck = deck.slice(cardIndex);
@@ -286,50 +286,40 @@ function moveCardToStack(card) {
     const targetStackId = card.numericValue;
     const targetStack = stacks[targetStackId];
     
+    // Verificar que es la carta superior
     if (sourceStack.cards[sourceStack.cards.length - 1] !== card) {
         statusText.textContent = 'Solo puedes mover la carta superior del montón';
         return;
     }
     
-    Object.values(stacks).forEach(stack => {
-        stack.element.classList.remove('active');
-    });
-    sourceStack.element.classList.add('active');
-    targetStack.element.classList.add('active');
-    
+    // Animación de movimiento
     sourceStack.cards.pop();
     movesCount++;
     targetStack.cards.push(card);
     
     const cardEl = card.element;
-    const sourceX = parseInt(cardEl.style.left);
-    const sourceY = parseInt(cardEl.style.top);
     const targetX = targetStack.position.x;
-    const targetY = targetStack.position.y;
-    const rotation = Math.random() * 20 - 10;
+    const targetY = targetStack.position.y + ((targetStack.cards.length - 1) * 15); // Posición en escalera
     
-    cardEl.style.setProperty('--endX', `${targetX - sourceX}px`);
-    cardEl.style.setProperty('--endY', `${targetY - sourceY}px`);
-    cardEl.style.setProperty('--rotation', `${rotation}deg`);
+    cardEl.style.zIndex = 1000; // Asegurar que está por encima durante el movimiento
     
-    cardEl.classList.add('card-move');
+    cardEl.style.transition = 'all 0.5s ease';
+    cardEl.style.left = `${targetX}px`;
+    cardEl.style.top = `${targetY}px`;
     
-    cardEl.addEventListener('animationend', () => {
-        cardEl.classList.remove('card-move');
-        cardEl.style.left = `${targetX}px`;
-        cardEl.style.top = `${targetY}px`;
-        cardEl.style.transform = `rotate(${rotation}deg)`;
+    cardEl.addEventListener('transitionend', () => {
+        cardEl.style.transition = '';
+        cardEl.style.zIndex = targetStack.cards.length - 1;
         
+        // Voltear la nueva carta superior en el stack de origen
         if (sourceStack.cards.length > 0) {
-            const topCard = sourceStack.cards[sourceStack.cards.length - 1];
+            const newTopCard = sourceStack.cards[sourceStack.cards.length - 1];
             setTimeout(() => {
-                topCard.element.classList.add('flipped');
+                newTopCard.element.classList.remove('flipped');
             }, 300);
         }
         
         checkGameStatus(card);
-        sourceStack.element.classList.remove('active');
-        targetStack.element.classList.remove('active');
     }, {once: true});
 }
 
