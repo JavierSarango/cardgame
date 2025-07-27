@@ -26,6 +26,47 @@ const stackPositions = [
     {id: 13, x: 320, y: 280}
 ];
 
+// Variables del juego 
+let timerInterval = null;
+let startTime = 0;
+let elapsedTime = 0;
+
+
+
+// Elementos UI adicionales
+const movesDisplay = document.getElementById('movesDisplay');
+const timerDisplay = document.getElementById('timerDisplay');
+
+// Función para actualizar el timer
+function updateTimer() {
+    const seconds = Math.floor(elapsedTime % 60);
+    const minutes = Math.floor((elapsedTime / 60) % 60);
+    const hours = Math.floor(elapsedTime / 3600);
+    
+    timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// Función para iniciar el timer
+function startTimer() {
+    startTime = Date.now() - elapsedTime * 1000;
+    timerInterval = setInterval(() => {
+        elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        updateTimer();
+    }, 1000);
+}
+
+// Función para detener el timer
+function stopTimer() {
+    clearInterval(timerInterval);
+}
+
+// Función para resetear el timer
+function resetTimer() {
+    stopTimer();
+    elapsedTime = 0;
+    updateTimer();
+}
+
 // Precarga de imágenes
 function preloadImages() {
     const numericValues = Array.from({length: 13}, (_, i) => i + 1);
@@ -59,6 +100,21 @@ const btnReset = document.getElementById('btnReset');
 
 // Inicializar el juego
 function initGame() {
+    // Detener y resetear el timer
+    stopTimer();
+    elapsedTime = 0;
+    updateTimer();
+    
+    // Resetear contador de movimientos
+    movesCount = 0;
+    movesDisplay.textContent = '0';
+    
+    // Limpiar mensajes
+    statusText.textContent = 'Preparado para comenzar';
+    winMessage.classList.add('hidden');
+    loseMessage.classList.add('hidden');
+    
+    // Crear nuevo juego
     createDeck();
     createStacks();
     updateGameState('ready');
@@ -183,23 +239,26 @@ function shuffleDeck() {
 
 // Repartir cartas
 
+// Modificar la función dealCards para iniciar el timer
 function dealCards() {
     updateGameState('dealing');
     statusText.textContent = 'Repartiendo cartas...';
+    startTimer(); // Iniciar el timer al repartir cartas
+    // Solo resetear movimientos (el timer sigue corriendo)
+    movesCount = 0;
+    movesDisplay.textContent = '0';
     
-     // Limpiar los stacks
+    // Limpiar los stacks
     Object.values(stacks).forEach(stack => {
         stack.cards = [];
-        stack.element.innerHTML = stack.id === 13 ? 'K' : stack.id; // Restaurar texto del stack
+        stack.element.innerHTML = stack.id === 13 ? 'K' : stack.id;
     });
     
     // Barajar nuevamente antes de repartir
     shuffleArray(deck);
     
-    // Distribución mejorada
-    // Distribución mejorada
     let cardIndex = 0;
-    const CARD_OFFSET = 15; // Pixeles de separación para el efecto escalera
+    const CARD_OFFSET = 15;
     
     for (let i = 0; i < 4; i++) {
         for (let stackId = 1; stackId <= 13; stackId++) {
@@ -209,23 +268,21 @@ function dealCards() {
             const stack = stacks[stackId];
             stack.cards.push(card);
             
-            const cardEl = createCardElement(card, false); // Todas comienzan boca abajo
+            const cardEl = createCardElement(card, false);
             card.element = cardEl;
             gameArea.appendChild(cardEl);
             
             const targetX = stack.position.x;
-            const targetY = stack.position.y + (i * CARD_OFFSET); // Efecto escalera
+            const targetY = stack.position.y + (i * CARD_OFFSET);
             
             cardEl.style.left = `${targetX}px`;
             cardEl.style.top = `${targetY}px`;
-            cardEl.style.zIndex = i; // Asegurar orden de apilamiento
+            cardEl.style.zIndex = i;
             
-            // Animación de reparto
             cardEl.style.setProperty('--startX', `-${targetX}px`);
             cardEl.style.setProperty('--startY', `-${targetY}px`);
             cardEl.classList.add('dealCard');
             
-            // Configurar evento de clic solo para la última carta añadida
             if (i === 3) {
                 cardEl.addEventListener('click', () => {
                     if (gameState === 'playing') {
@@ -236,15 +293,20 @@ function dealCards() {
         }
     }
     
-    
-    // Actualizar el mazo después de repartir
     deck = deck.slice(cardIndex);
     
     setTimeout(() => {
         statusText.textContent = '¡Comienza el juego! Haz clic en una carta para moverla.';
         updateGameState('playing');
+        // Solo iniciar timer si no está corriendo
+        if (!timerInterval) {
+            startTimer();
+        }
     }, 2000);
 }
+
+
+
 function checkSuitsDistribution() {
     const suitCount = {
         heart: 0,
@@ -263,10 +325,11 @@ function checkSuitsDistribution() {
     console.log('Distribución de palos en cartas visibles:', suitCount);
 }
 // Mover carta a stack
+// Modificar la función moveCardToStack para incluir feedback visual
 function moveCardToStack(card) {
     const sourceStack = findCardStack(card);
     if (!sourceStack) return;
-    
+
     const targetStackId = card.numericValue;
     const targetStack = stacks[targetStackId];
     
@@ -275,19 +338,18 @@ function moveCardToStack(card) {
         return;
     }
 
-    console.log('Carta seleccionada:', {
-        valor: card.value, 
-        palo: card.suit,
-        valorNumerico: card.numericValue
-    });
-
+    // Resaltar el stack destino
+    targetStack.element.classList.add('target-highlight');
+    
+    // Mostrar feedback visual
+    statusText.textContent = `Moviendo ${card.value} de ${card.suit} al montón ${targetStackId}`;
+    
     // Desactivar clic temporalmente
     card.element.style.pointerEvents = 'none';
 
     // Voltear la carta (mostrar frente)
     card.element.classList.remove('flipped');
     
-    // Usar setTimeout para sincronizar con la animación CSS
     setTimeout(() => {
         // Mover la carta después del volteo
         sourceStack.cards.pop();
@@ -306,16 +368,26 @@ function moveCardToStack(card) {
             cardEl.style.pointerEvents = 'auto';
             cardEl.style.transition = 'transform 0.6s ease';
             
+            // Quitar resaltado del stack destino
+            targetStack.element.classList.remove('target-highlight');
+            
             // Mostrar nueva carta superior si existe
             if (sourceStack.cards.length > 0) {
                 const newTopCard = sourceStack.cards[sourceStack.cards.length - 1];
                 newTopCard.element.classList.remove('flipped');
             }
             
+            // Incrementar contador de movimientos
+            movesCount++;
+            movesDisplay.textContent = movesCount;
+            
             checkGameStatus(card);
         }, { once: true });
-    }, 600); // Tiempo igual a la duración del volteo
+    }, 600);
 }
+
+
+
 // Funciones auxiliares
 function findCardStack(card) {
     return Object.values(stacks).find(stack => stack.cards.includes(card));
@@ -355,6 +427,11 @@ function checkGameStatus(movedCard) {
 function winGame() {
     updateGameState('win');
     statusText.textContent = '¡Felicidades! Has ganado el juego.';
+    
+    // Mostrar estadísticas finales
+    document.getElementById('finalTime').textContent = timerDisplay.textContent;
+    document.getElementById('finalMoves').textContent = movesCount;
+    
     winMessage.classList.remove('hidden');
     Object.values(stacks).forEach(stack => stack.element.classList.add('completed'));
 }
@@ -367,21 +444,35 @@ function loseGame() {
 
 function updateGameState(state) {
     gameState = state;
-    btnShuffle.disabled = state === 'shuffling' || state === 'dealing';
-    btnDeal.disabled = state === 'shuffling' || state === 'dealing' || state === 'playing';
+    
+    // Lógica de botones
+    btnShuffle.disabled = state !== 'ready';
+    btnDeal.disabled = state !== 'ready';
     btnReset.disabled = false;
+    
+    // Ocultar mensajes
     winMessage.classList.add('hidden');
     loseMessage.classList.add('hidden');
+    
+    // Manejar timer en estados finales
+    if (state === 'win' || state === 'lose') {
+        stopTimer();
+    }
 }
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     preloadImages();
     initGame();
+    
     btnShuffle.addEventListener('click', shuffleDeck);
     btnDeal.addEventListener('click', () => {
         dealCards();
-        setTimeout(checkSuitsDistribution, 2100); // Verificar después de repartir
+        setTimeout(checkSuitsDistribution, 2100);
     });
-    btnReset.addEventListener('click', initGame);
+    
+    // Resetear completamente al presionar Reiniciar
+    btnReset.addEventListener('click', () => {
+        initGame();
+    });
 });
