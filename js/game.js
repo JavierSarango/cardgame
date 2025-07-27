@@ -30,6 +30,8 @@ const stackPositions = [
 let timerInterval = null;
 let startTime = 0;
 let elapsedTime = 0;
+let isTimerRunning = false; // Nueva variable para controlar el estado del timer
+
 // Variables adicionales
 let lastMovedCard = null;
 let currentActiveStack = null;
@@ -49,8 +51,13 @@ function updateTimer() {
 }
 
 // Función para iniciar el timer
+// Función para iniciar el timer (modificada)
 function startTimer() {
-    startTime = Date.now() - elapsedTime * 1000;
+    if (isTimerRunning) return; // Evitar múltiples inicios
+    
+    isTimerRunning = true;
+    startTime = Date.now() - (elapsedTime * 1000);
+    
     timerInterval = setInterval(() => {
         elapsedTime = Math.floor((Date.now() - startTime) / 1000);
         updateTimer();
@@ -60,6 +67,8 @@ function startTimer() {
 // Función para detener el timer
 function stopTimer() {
     clearInterval(timerInterval);
+    timerInterval = null;
+    isTimerRunning = false;
 }
 
 // Función para resetear el timer
@@ -102,25 +111,41 @@ const btnReset = document.getElementById('btnReset');
 
 // Inicializar el juego
 function initGame() {
-    // Detener y resetear el timer
-    stopTimer();
-    elapsedTime = 0;
-    updateTimer();
-    
-    // Resetear contador de movimientos
-    movesCount = 0;
-    movesDisplay.textContent = '0';
+        
+    resetGame();
     
     // Limpiar mensajes
     statusText.textContent = 'Preparado para comenzar ¡Dale a Barajar!';
     winMessage.classList.add('hidden');
     loseMessage.classList.add('hidden');
     
+}
+
+function resetGame() {
+    // Detener y resetear el timer completamente
+    stopTimer();
+    elapsedTime = 0;
+    updateTimer();
+    isTimerRunning = false;
+    
+    // Resetear otros elementos del juego
+    movesCount = 0;
+    movesDisplay.textContent = '0';
+    lastMovedCard = null;
+    currentActiveStack = null;
+    statusText.textContent = 'Preparado para comenzar ¡Dale a Barajar!';
+    winMessage.classList.add('hidden');
+    loseMessage.classList.add('hidden');
+    
+    // Limpiar el área de juego
+    gameArea.innerHTML = '';
+    
     // Crear nuevo juego
     createDeck();
     createStacks();
     updateGameState('ready');
 }
+
 
 // Crear la baraja// Crear la baraja
 function createDeck() {
@@ -245,7 +270,9 @@ function shuffleDeck() {
 function dealCards() {
     updateGameState('dealing');
     statusText.textContent = 'Repartiendo cartas...';
-    startTimer();
+    stopTimer();
+    elapsedTime = 0;
+    updateTimer();
     movesCount = 0;
     movesDisplay.textContent = '0';
     
@@ -300,11 +327,10 @@ function dealCards() {
         statusText.textContent = '¡Comienza el juego! Haz clic en una carta para moverla.';
         updateGameState('playing');
         
-        // Reiniciar el timer completamente para cada nueva partida
-        clearInterval(timerInterval);
-        elapsedTime = 0;
+        // Iniciar el timer correctamente
         startTimer();
-        timerInterval = setInterval(updateTimer, 1000);
+        
+        // [El resto de tu código...]
     }, 2000);
 }
 
@@ -456,6 +482,7 @@ function loseGame() {
     updateGameState('lose');
     statusText.textContent = '¡Juego terminado! El Rey bloqueó el juego.';
     loseMessage.classList.remove('hidden');
+    stopTimer();
 }
 
 function updateGameState(state) {
@@ -482,13 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initGame();
     
     btnShuffle.addEventListener('click', shuffleDeck);
-    btnDeal.addEventListener('click', () => {
-        dealCards();
-        setTimeout(checkSuitsDistribution, 2100);
-    });
-    
-    // Resetear completamente al presionar Reiniciar
-    btnReset.addEventListener('click', () => {
-        initGame();
-    });
+    btnDeal.addEventListener('click', dealCards);
+    btnReset.addEventListener('click', resetGame); // Usar resetGame directamente
 });
