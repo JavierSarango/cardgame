@@ -339,30 +339,26 @@ function dealCards() {
 
 // Helper function to update the visual position and z-index of all cards in a stack
 // Helper function to update the visual position and z-index of all cards in a stack
+// Helper function to update the visual position and z-index of all cards in a stack
 function updateStackVisuals(stack) {
     const CARD_OFFSET = 15; // Vertical offset for stacked cards
-    const COMPLETED_CARD_OFFSET_X = 80;
-    const COMPLETED_CARD_OFFSET_Y_INCREMENT = 20;
+    // Eliminar: const COMPLETED_CARD_OFFSET_X = 80;
+    // Eliminar: const COMPLETED_CARD_OFFSET_Y_INCREMENT = 20;
 
-    const isCompletedStackTarget = stack.cards.every(c => c.numericValue === stack.id) && stack.id !== 13;
+    // Eliminar: const isCompletedStackTarget = stack.cards.every(c => c.numericValue === stack.id) && stack.id !== 13;
 
     // Limpiar visualmente el contenido del stack, si es necesario, antes de re-renderizar
     if (stack.id === 13) {
-        // Para el stack del Rey, podemos mantener el texto 'K' si se desea
         if (stack.element.textContent !== 'K') stack.element.textContent = 'K';
         stack.element.classList.add('central-stack'); 
-        stack.element.classList.remove('completed-stack-base'); // Asegurarse de que no tenga la clase de completado
-    } else if (isCompletedStackTarget) {
-        stack.element.textContent = ''; // Los stacks completados no necesitan su ID visible
-        stack.element.classList.add('completed-stack-base'); 
-        stack.element.classList.remove('central-stack'); 
-    } else {
-        // Para stacks de juego normales, también podríamos limpiar el ID
-        stack.element.textContent = ''; 
+        stack.element.classList.remove('completed-stack-base'); 
+    } else { // Si no es el stack del Rey, simplemente limpiar si no hay texto o clases especiales
+        stack.element.textContent = ''; // Limpiar el ID si solo las cartas lo definen
         stack.element.classList.remove('central-stack', 'completed-stack-base'); 
     }
     
-    // NO ordenar aquí si quieres mantener el orden de "la carta que llega se va al fondo"
+    // No ordenar aquí si quieres mantener el orden de "la carta que llega se va al fondo"
+    // (Asegúrate de que esta línea esté comentada o eliminada si quieres orden por llegada)
     // stack.cards.sort((a, b) => a.numericValue - b.numericValue); 
 
     stack.cards.forEach((card, index) => {
@@ -371,34 +367,27 @@ function updateStackVisuals(stack) {
         let targetY = stack.position.y;
         let zIndex = index; // Menor índice (más abajo) = menor z-index
 
-        // Aplicar offset para stacks completados
-        if (isCompletedStackTarget) {
-            targetX = stack.position.x + COMPLETED_CARD_OFFSET_X;
-            targetY = stack.position.y + index * COMPLETED_CARD_OFFSET_Y_INCREMENT;
-            zIndex = 100 + index; 
-            cardEl.classList.remove('flipped'); // Todas las cartas completadas se muestran boca arriba
-        } else if (stack.id === 13) { // Stack del Rey (apila normal)
-            targetY = stack.position.y + index * CARD_OFFSET;
-            cardEl.classList.remove('flipped'); // Todas las cartas del Rey se muestran boca arriba
-        } else { // Resto de stacks (apila normal)
-            targetY = stack.position.y + index * CARD_OFFSET;
-            // Solo la carta superior se muestra boca arriba, las demás boca abajo
-            if (index === stack.cards.length - 1) { // Si es la última carta en el array (la superior)
-                cardEl.classList.remove('flipped'); // Mostrar cara
-            } else {
-                cardEl.classList.add('flipped'); // Esconder cara
-            }
+        // --- Lógica de apilamiento vertical estándar ---
+        // Ya no necesitamos 'isCompletedStackTarget' o lógica para el 'Rey' separada para la posición
+        // ya que todos se apilarán de la misma manera.
+        targetY = stack.position.y + index * CARD_OFFSET;
+        zIndex = index; // Z-index normal para apilamiento
+        
+        // Volteo de cartas:
+        // Solo la carta superior se muestra boca arriba, las demás boca abajo
+        if (index === stack.cards.length - 1) { // Si es la última carta en el array (la superior)
+            cardEl.classList.remove('flipped'); // Mostrar cara
+        } else {
+            cardEl.classList.add('flipped'); // Esconder cara
         }
 
-        // Aplicar posiciones y z-index SIN TRANSICION AQUI si la transicion ya fue manejada por el movimiento.
-        // O con una transicion rápida para cambios de z-index
-        cardEl.style.transition = 'left 0.2s ease, top 0.2s ease, z-index 0.2s ease'; // Transición rápida para reorganización
+        cardEl.style.transition = 'left 0.2s ease, top 0.2s ease, z-index 0.2s ease'; 
         cardEl.style.left = `${targetX}px`;
         cardEl.style.top = `${targetY}px`;
         cardEl.style.zIndex = zIndex;
 
         // Gestión de clickability: solo la carta superior es clicable
-        if (index === stack.cards.length - 1) { // Si es la carta superior del stack
+        if (index === stack.cards.length - 1) { 
             if (!card.clickListener) {
                 card.clickListener = () => {
                     if (gameState === 'playing') {
@@ -408,21 +397,13 @@ function updateStackVisuals(stack) {
             }
             cardEl.addEventListener('click', card.clickListener);
             cardEl.style.pointerEvents = 'auto'; 
-        } else { // Las cartas enterradas no son clicables
+        } else { 
             if (card.clickListener) {
                 cardEl.removeEventListener('click', card.clickListener);
             }
             cardEl.style.pointerEvents = 'none';
         }
     });
-    
-    // Si un stack se vacía, remover los elementos de las cartas
-    if (stack.cards.length === 0) {
-        // En un escenario real, si el stack puede vaciarse, necesitarías remover los elementos HTML de las cartas que ya no están.
-        // Pero dado que se llaman updates sobre stacks con cartas, no es estrictamente necesario aquí.
-        // O podrías limpiar el contenedor del stack y luego añadir solo las que quedan.
-        // Por ahora, updateStackVisuals solo se llama cuando hay cartas en el array.
-    }
 }
 
 function checkSuitsDistribution() {
@@ -444,6 +425,7 @@ function checkSuitsDistribution() {
 }
 // Mover carta a stack
 // Modificar la función moveCardToStack para incluir feedback visual
+// Modified moveCardToStack function
 function moveCardToStack(card) {
     const sourceStack = findCardStack(card);
     if (!sourceStack) return;
@@ -451,11 +433,17 @@ function moveCardToStack(card) {
     const targetStackId = card.numericValue;
     const targetStack = stacks[targetStackId];
     
+    // Eliminar: const COMPLETED_CARD_OFFSET_X = 80;
+    // Eliminar: const COMPLETED_CARD_OFFSET_Y_INCREMENT = 20;
+
     if (sourceStack.cards[sourceStack.cards.length - 1] !== card) {
         statusText.textContent = 'Solo puedes mover la carta superior del montón.';
         return;
     }
 
+    // Esta lógica de "posición final" podría necesitar ajuste si los stacks ahora solo se apilan.
+    // Si ya no hay un estado 'completado' visualmente diferenciado para las cartas que van al lado.
+    // Por ahora, la mantendremos si sigue teniendo sentido para tu lógica de juego interna.
     if (sourceStack.id === targetStackId && card.numericValue === sourceStack.id && targetStack.cards[0] === card && targetStack.cards.length === 4) {
          statusText.textContent = 'Esta carta ya está en su posición final.';
          return;
@@ -463,52 +451,46 @@ function moveCardToStack(card) {
     
     statusText.textContent = `Moviendo ${card.value} de ${card.suit} al montón ${targetStackId}.`;
     
-    // Desactivar clic en la carta que se va a mover de inmediato
     if (card.clickListener) {
         card.element.removeEventListener('click', card.clickListener);
     }
     card.element.style.pointerEvents = 'none'; 
 
     // --- PASO 1: VOLTEAR LA CARTA ---
-    // Asegurarse de que solo la propiedad 'transform' tiene transición para el volteo
     card.element.style.transition = 'transform 0.3s ease'; 
-    card.element.classList.remove('flipped'); // Voltear la carta boca arriba
+    card.element.classList.remove('flipped'); 
 
-    // Esperar a que la animación de volteo termine
     setTimeout(() => {
         // --- PASO 2: MOVER LA CARTA ---
-        sourceStack.cards.pop(); // Remover del stack de origen
-        targetStack.cards.unshift(card); // Añadir al fondo del stack de destino
+        sourceStack.cards.pop(); 
+        targetStack.cards.unshift(card); 
 
-        // Posiciones temporales para la animación de movimiento
+        // Las posiciones temporales para el movimiento ahora serán solo las del stack base.
+        // updateStackVisuals se encargará del apilamiento vertical.
         const tempTargetX = targetStack.position.x;
         const tempTargetY = targetStack.position.y; 
 
-        // Preparar la carta para la animación de movimiento (ahora solo left/top/z-index)
         card.element.style.transition = 'left 0.5s ease, top 0.5s ease, z-index 0.5s ease';
         card.element.style.left = `${tempTargetX}px`;
         card.element.style.top = `${tempTargetY}px`;
-        card.element.style.zIndex = -1; // Enviar al fondo durante el movimiento
+        card.element.style.zIndex = -1; 
 
-        // Esperar a que la animación de movimiento termine
         card.element.addEventListener('transitionend', function handler(e) {
-            // Asegurarse de que el listener solo reaccione a las propiedades que controlamos
             if (e.propertyName !== 'left' && e.propertyName !== 'top' && e.propertyName !== 'z-index') return;
             
             card.element.removeEventListener('transitionend', handler);
 
             // --- PASO 3: ACTUALIZAR VISUALES Y ESTADO DEL JUEGO ---
-            updateStackVisuals(sourceStack); // Re-renderizar el stack de origen (nueva carta superior)
-            updateStackVisuals(targetStack); // Re-renderizar el stack de destino (incluyendo la carta recién movida)
+            updateStackVisuals(sourceStack); 
+            updateStackVisuals(targetStack); 
 
             movesCount++;
             movesDisplay.textContent = movesCount;
             
             checkGameStatus(card); 
         });
-    }, 300); // Duración de la animación de volteo (0.3s)
+    }, 300); 
 }
-
 
 
 
