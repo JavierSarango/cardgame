@@ -30,7 +30,9 @@ const stackPositions = [
 let timerInterval = null;
 let startTime = 0;
 let elapsedTime = 0;
-
+// Variables adicionales
+let lastMovedCard = null;
+let currentActiveStack = null;
 
 
 // Elementos UI adicionales
@@ -110,7 +112,7 @@ function initGame() {
     movesDisplay.textContent = '0';
     
     // Limpiar mensajes
-    statusText.textContent = 'Preparado para comenzar';
+    statusText.textContent = 'Preparado para comenzar ¡Dale a Barajar!';
     winMessage.classList.add('hidden');
     loseMessage.classList.add('hidden');
     
@@ -243,8 +245,7 @@ function shuffleDeck() {
 function dealCards() {
     updateGameState('dealing');
     statusText.textContent = 'Repartiendo cartas...';
-    startTimer(); // Iniciar el timer al repartir cartas
-    // Solo resetear movimientos (el timer sigue corriendo)
+    startTimer();
     movesCount = 0;
     movesDisplay.textContent = '0';
     
@@ -254,7 +255,6 @@ function dealCards() {
         stack.element.innerHTML = stack.id === 13 ? 'K' : stack.id;
     });
     
-    // Barajar nuevamente antes de repartir
     shuffleArray(deck);
     
     let cardIndex = 0;
@@ -283,6 +283,7 @@ function dealCards() {
             cardEl.style.setProperty('--startY', `-${targetY}px`);
             cardEl.classList.add('dealCard');
             
+            // Añadir listener solo si es la última carta del stack (carta superior)
             if (i === 3) {
                 cardEl.addEventListener('click', () => {
                     if (gameState === 'playing') {
@@ -298,10 +299,12 @@ function dealCards() {
     setTimeout(() => {
         statusText.textContent = '¡Comienza el juego! Haz clic en una carta para moverla.';
         updateGameState('playing');
-        // Solo iniciar timer si no está corriendo
-        if (!timerInterval) {
-            startTimer();
-        }
+        
+        // Reiniciar el timer completamente para cada nueva partida
+        clearInterval(timerInterval);
+        elapsedTime = 0;
+        startTimer();
+        timerInterval = setInterval(updateTimer, 1000);
     }, 2000);
 }
 
@@ -333,6 +336,7 @@ function moveCardToStack(card) {
     const targetStackId = card.numericValue;
     const targetStack = stacks[targetStackId];
     
+    // Verificar si es la carta superior del stack origen
     if (sourceStack.cards[sourceStack.cards.length - 1] !== card) {
         statusText.textContent = 'Solo puedes mover la carta superior del montón';
         return;
@@ -340,8 +344,6 @@ function moveCardToStack(card) {
 
     // Resaltar el stack destino
     targetStack.element.classList.add('target-highlight');
-    
-    // Mostrar feedback visual
     statusText.textContent = `Moviendo ${card.value} de ${card.suit} al montón ${targetStackId}`;
     
     // Desactivar clic temporalmente
@@ -371,11 +373,25 @@ function moveCardToStack(card) {
             // Quitar resaltado del stack destino
             targetStack.element.classList.remove('target-highlight');
             
-            // Mostrar nueva carta superior si existe
+            // Mostrar nueva carta superior en el stack origen si existe
             if (sourceStack.cards.length > 0) {
                 const newTopCard = sourceStack.cards[sourceStack.cards.length - 1];
                 newTopCard.element.classList.remove('flipped');
+                
+                // Asegurarse de que tiene el event listener
+                newTopCard.element.addEventListener('click', () => {
+                    if (gameState === 'playing') {
+                        moveCardToStack(newTopCard);
+                    }
+                });
             }
+            
+            // Añadir event listener a la carta movida (ahora es la superior en el stack destino)
+            cardEl.addEventListener('click', () => {
+                if (gameState === 'playing') {
+                    moveCardToStack(card);
+                }
+            });
             
             // Incrementar contador de movimientos
             movesCount++;
