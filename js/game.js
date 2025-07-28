@@ -103,8 +103,8 @@ function preloadImages() {
             new Image().src = `assets/images/front/${value}_${suit}.png`;
         });
     });
-    // Precargar imagen del oráculo si existe
-    new Image().src = 'assets/oracle/oracle_character2.png'; // Asegúrate de que esta ruta sea correcta
+    // Precargar imagen del oráculo 
+    new Image().src = 'assets/oracle/oracle_character2.png'; 
 }
 
 // Variables del juego
@@ -121,7 +121,7 @@ function initGame() {
     // Mostrar el modal de introducción
     oracleIntroModal.classList.remove('hidden');
 
-    // Asegurarse de que los otros modales estén ocultos
+   
     winModal.classList.add('hidden');
     loseModal.classList.add('hidden');
 

@@ -21,7 +21,7 @@
   position: absolute;
   cursor: pointer; /* Cursor por defecto */
   transform-style: preserve-3d;
-  transition: transform var(--flip-duration) ease, left 0.5s ease, top 0.5s ease, z-index 0.5s ease; /* Transiciones adicionales para movimiento */
+  transition: transform var(--flip-duration) ease, left 0.5s ease, top 0.5s ease, z-index 0.5s ease; 
   border-radius: var(--card-radius);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   z-index: 10;
@@ -54,10 +54,10 @@
   transform: rotateY(180deg);
 }
 
-/* Nuevos estilos para clicabilidad de las cartas */
+/* estilos para clicabilidad de las cartas */
 .card.clickable-card {
     cursor: pointer;
-    box-shadow: 0 0 15px rgba(255, 255, 0, 0.7); /* Brillo amarillo para cartas clicables */
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.7); 
     border: 2px solid yellow;
 }
 
@@ -98,7 +98,7 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.stack.active { /* Esto puede usarse para el stack de origen/destino si lo deseas */
+.stack.active { 
   border: 2px solid gold;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
   background: rgba(255, 215, 0, 0.1);
@@ -109,7 +109,7 @@
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
 }
 
-/* Nuevo estilo para stacks deshabilitados */
+/* estilo para stacks deshabilitados */
 .stack.disabled-stack {
     opacity: 0.4;
     pointer-events: none; /* Deshabilita cualquier interacción con el stack mismo si no es el activo */
@@ -117,21 +117,13 @@
     box-shadow: none;
 }
 
-/* Nuevo estilo para el stack de destino activo (si quieres resaltarlo) */
+/* Nuevo estilo para el stack de destino activo 
 .stack.active-target-stack {
     border: 2px solid #00BFFF; /* Un color azul claro o el que prefieras */
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
     background: rgba(0, 191, 255, 0.1);
 }
 
-/* Stack central (K) - Se mantienen aquí porque interactúan con las cartas */
-/* NOTA: Estos estilos específicos del stack 13 se mueven al HEAD del HTML para anular los generales si es necesario */
-/* #stack13 {
-    background: rgba(255,215,0,0.1);
-    border: 2px solid gold;
-    box-shadow: 0 0 15px rgba(255,215,0,0.5);
-    font-size: 2.2rem;
-} */
 
 /* Animaciones */
 .card-shuffle {
