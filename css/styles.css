@@ -38,20 +38,20 @@
   background-repeat: no-repeat;
   background-position: center;
 }
-/* Estado volteado: boca abajo (reverso visible) - Cuando tiene la clase 'flipped' */
+
 .card.flipped {
-  transform: rotateY(180deg); /* La carta se voltea para mostrar su reverso */
-}
-/* Frente de la carta (siempre orientado hacia adelante) */
-.card-front {
-  background-color: white;
-  transform: rotateY(180deg);
+  transform: rotateY(0deg); /* La carta se voltea para mostrar su reverso */
 }
 
-/* Reverso de la carta (girado para estar en la parte trasera) */
-.card-back {
+.card-front {
   background-color: white;
   transform: rotateY(0deg);
+}
+
+
+.card-back {
+  background-color: white;
+  transform: rotateY(180deg);
 }
 
 /* Montones */
@@ -88,14 +88,6 @@
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
 }
 
-/* Stack central (K) - Se mantienen aquí porque interactúan con las cartas */
-/* NOTA: Estos estilos específicos del stack 13 se mueven al HEAD del HTML para anular los generales si es necesario */
-/* #stack13 {
-    background: rgba(255,215,0,0.1);
-    border: 2px solid gold;
-    box-shadow: 0 0 15px rgba(255,215,0,0.5);
-    font-size: 2.2rem;
-} */
 
 /* Animaciones */
 .card-shuffle {
@@ -103,28 +95,6 @@
 }
 
 @keyframes shuffleAnimation {
-  0% {
-    transform: translate(0, 0) rotate(0);
-  }
-  100% {
-    transform: translate(var(--endX), var(--endY)) rotate(var(--rotation));
-  }
-}
-
-@keyframes flipCard {
-  0% {
-    transform: rotateY(0deg);
-  }
-  100% {
-    transform: rotateY(180deg);
-  }
-}
-
-.win-message {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
   0% {
     transform: scale(1);
   }

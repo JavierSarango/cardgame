@@ -340,7 +340,6 @@ function dealCards() {
     });
 }
 
-// Helper function to update the visual position and z-index of all cards in a stack
 function updateStackVisuals(stack) {
     const CARD_OFFSET = 15;
 
@@ -438,7 +437,6 @@ function moveCardToStack(card) {
     }
     card.element.style.pointerEvents = 'none';
 
-    // --- PASO 1: VOLTEAR LA CARTA ---
     card.element.style.transition = 'transform 0.3s ease';
     card.element.classList.remove('flipped'); // Asegurarse de que esté boca arriba para el movimiento
 
