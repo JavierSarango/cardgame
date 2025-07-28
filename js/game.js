@@ -35,12 +35,12 @@ let isTimerRunning = false;
 // Variables adicionales
 let lastMovedCard = null;
 let currentActiveStack = null;
-let userQuestionText = ""; // Variable para guardar la pregunta del usuario
-
+let userQuestionText = ""; 
+let consecutiveCorrectStackMoves = 0; 
 // Elementos UI adicionales
 const movesDisplay = document.getElementById('movesDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
-const statusText = document.getElementById('statusText'); // Mantenemos este para el sidebar
+const statusText = document.getElementById('statusText'); 
 
 // Referencias a los botones
 const btnShuffle = document.getElementById('btnShuffle');
@@ -49,7 +49,7 @@ const btnReset = document.getElementById('btnReset');
 
 // Referencias a los elementos del juego y modales
 const gameArea = document.getElementById('gameArea');
-const gameScreen = document.getElementById('gameScreen'); // El contenedor principal del juego
+const gameScreen = document.getElementById('gameScreen'); 
 
 const oracleIntroModal = document.getElementById('oracleIntroModal');
 const winModal = document.getElementById('winModal');
@@ -140,9 +140,9 @@ function resetGame() {
     movesDisplay.textContent = '0';
     lastMovedCard = null;
     currentActiveStack = null;
-    statusText.textContent = 'Preparado para comenzar ¡Dale a Barajar!'; // Mensaje en sidebar
+    statusText.textContent = 'Preparado para comenzar ¡Dale a Barajar!'; 
 
-    gameArea.innerHTML = ''; // Limpiar el área de juego
+    gameArea.innerHTML = ''; 
 
     createDeck();
     createStacks();
@@ -345,12 +345,11 @@ function updateStackVisuals(stack) {
 
     // Limpiar visualmente el contenido del stack, si es necesario, antes de re-renderizar
     if (stack.id === 13) {
-        // Para el stack K, si necesitas que la 'K' sea el texto principal del div stack
-        // stack.element.textContent = 'K';
+
         stack.element.classList.add('central-stack');
         stack.element.classList.remove('completed-stack-base');
     } else {
-        // stack.element.textContent = '';
+
         stack.element.classList.remove('central-stack', 'completed-stack-base');
     }
 
@@ -363,7 +362,7 @@ function updateStackVisuals(stack) {
         targetY = stack.position.y + index * CARD_OFFSET;
         zIndex = index;
 
-        if (index === stack.cards.length - 1) { // Si es la última carta en el array (la superior)
+        if (index === stack.cards.length - 1) { 
             cardEl.classList.remove('flipped'); // Mostrar cara (quita 'flipped')
         } else {
             cardEl.classList.add('flipped'); // Esconder cara (añade 'flipped')
@@ -425,8 +424,25 @@ function moveCardToStack(card) {
         return;
     }
 
+    if (sourceStack.id === targetStackId) { 
+        consecutiveCorrectStackMoves++;
+    } else {
+        consecutiveCorrectStackMoves = 0; 
+    }
+
+    // Comprobación temprana de derrota si ya excedió el límite
+  statusText.textContent = `Movimientos seguidos al stack correcto: ${consecutiveCorrectStackMoves}.`;
+    if (consecutiveCorrectStackMoves >= 5) {
+    loseGame();
+    statusText.textContent = '¡Has perdido! Demasiados movimientos seguidos a tu stack correcto.';
+    return;
+}   
+
+
     if (sourceStack.id === targetStackId && card.numericValue === sourceStack.id && targetStack.cards[0] === card && targetStack.cards.length === 4) {
         statusText.textContent = 'Esta carta ya está en su posición final.';
+       
+        consecutiveCorrectStackMoves = 0; 
         return;
     }
 
@@ -438,10 +454,10 @@ function moveCardToStack(card) {
     card.element.style.pointerEvents = 'none';
 
     card.element.style.transition = 'transform 0.3s ease';
-    card.element.classList.remove('flipped'); // Asegurarse de que esté boca arriba para el movimiento
+    card.element.classList.remove('flipped'); 
 
     setTimeout(() => {
-        // --- PASO 2: MOVER LA CARTA ---
+      
         // Eliminar la carta del stack de origen
         sourceStack.cards.pop();
         // Añadir la carta al stack de destino
@@ -457,7 +473,7 @@ function moveCardToStack(card) {
         card.element.style.zIndex = -1; // Enviar la carta al fondo mientras se mueve
 
         card.element.addEventListener('transitionend', function handler(e) {
-            // Asegurarse de que la transición correcta haya terminado
+           
             if (e.propertyName === 'left' || e.propertyName === 'top' || e.propertyName === 'z-index') {
                 card.element.removeEventListener('transitionend', handler);
 
@@ -480,40 +496,26 @@ function findCardStack(card) {
 }
 
 function checkGameStatus(movedCard) {
-    let allCompleted = true;
+    let allGameStacksCompleted = true;
 
+    // Recalcular el estado de "completado" para todos los stacks
     Object.values(stacks).forEach(stack => {
         const requiredValue = stack.id;
-        const allMatch = stack.cards.every(card => card.numericValue === requiredValue);
-
-        stack.completed = allMatch && stack.cards.length === 4;
+        const allCardsMatchValue = stack.cards.every(card => card.numericValue === requiredValue);
+        stack.completed = allCardsMatchValue && stack.cards.length === 4;
         stack.element.classList.toggle('completed', stack.completed);
 
-        if (!stack.completed) allCompleted = false;
+        if (!stack.completed) {
+            allGameStacksCompleted = false;
+        }
     });
 
-    if (allCompleted) {
+    // Si todos los stacks están completos, es una victoria.
+    if (allGameStacksCompleted) {
         winGame();
         return;
     }
 
-    // Lógica de derrota solo si el rey (K) se mueve y no hay más movimientos posibles
-    if (movedCard.value === 'K') {
-        const nonKingCardsCanMove = Object.values(stacks).some(stack =>
-            stack.id !== 13 && // No es el stack del rey
-            stack.cards.length > 0 && // Tiene cartas
-            stack.cards[stack.cards.length - 1].value !== 'K' && // La carta superior no es K
-            stack.cards[stack.cards.length - 1].numericValue !== stack.id // La carta superior no está en su stack correcto
-            // Aquí podrías añadir una lógica más compleja para determinar si hay un movimiento "legal"
-            // Por simplicidad, si un K se mueve y no hay otras cartas no-K que no estén en su lugar, se considera derrota.
-        );
-
-        // Si el K se movió y no quedan cartas no-K fuera de su stack final
-        // Y el stack K no está completo aún
-        if (!nonKingCardsCanMove && !stacks[13].completed) {
-            loseGame();
-        }
-    }
 }
 
 
@@ -529,7 +531,7 @@ function winGame() {
     gameScreen.classList.add('hidden'); // Ocultar la pantalla del juego
     winModal.classList.remove('hidden'); // Mostrar el modal de victoria
 
-    // Visualizar todos los stacks como completados (aunque el juego esté oculto, es por consistencia)
+    // Visualizar todos los stacks como completados 
     Object.values(stacks).forEach(stack => stack.element.classList.add('completed'));
 }
 
@@ -540,8 +542,8 @@ function loseGame() {
     // Mostrar mensaje de derrota del oráculo en el modal
     oracleLoseAnswer.textContent = `Lamentablemente, la respuesta a tu pregunta "${userQuestionText}" es NO`;
 
-    gameScreen.classList.add('hidden'); // Ocultar la pantalla del juego
-    loseModal.classList.remove('hidden'); // Mostrar el modal de derrota
+    gameScreen.classList.add('hidden'); 
+    loseModal.classList.remove('hidden'); 
 }
 
 function updateGameState(state) {
@@ -549,13 +551,13 @@ function updateGameState(state) {
 
     btnShuffle.disabled = state !== 'ready';
     btnDeal.disabled = state !== 'ready';
-    btnReset.disabled = false; // El botón de reset siempre debería estar disponible
+    btnReset.disabled = false; 
 }
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     preloadImages();
-    initGame(); // Ahora initGame muestra el modal de introducción
+    initGame(); 
 
     // Event listeners para los modales
     startGameButton.addEventListener('click', () => {
@@ -564,23 +566,23 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Por favor, ingresa tu pregunta al oráculo.");
             return;
         }
-        userQuestionText = question; // Guardar la pregunta
-        oracleIntroModal.classList.add('hidden'); // Ocultar modal de intro
-        gameScreen.classList.remove('hidden'); // Mostrar la pantalla del juego principal
-        resetGame(); // Reiniciar el juego para empezar
+        userQuestionText = question; 
+        oracleIntroModal.classList.add('hidden'); 
+        gameScreen.classList.remove('hidden'); 
+        resetGame(); 
         statusText.textContent = 'Presiona "Barajar" para comenzar.';
     });
 
     playAgainWinButton.addEventListener('click', () => {
-        winModal.classList.add('hidden'); // Ocultar modal de victoria
-        initGame(); // Vuelve a la pantalla de introducción (modal)
-        userQuestionInput.value = ""; // Limpia la pregunta anterior
+        winModal.classList.add('hidden');
+        initGame(); 
+        userQuestionInput.value = ""; 
     });
 
     playAgainLoseButton.addEventListener('click', () => {
-        loseModal.classList.add('hidden'); // Ocultar modal de derrota
-        initGame(); // Vuelve a la pantalla de introducción (modal)
-        userQuestionInput.value = ""; // Limpia la pregunta anterior
+        loseModal.classList.add('hidden'); 
+        initGame(); 
+        userQuestionInput.value = ""; 
     });
 
     // Tus event listeners existentes

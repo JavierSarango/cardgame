@@ -19,9 +19,9 @@
   width: var(--card-width);
   height: var(--card-height);
   position: absolute;
-  cursor: pointer;
+  cursor: pointer; /* Cursor por defecto */
   transform-style: preserve-3d;
-  transition: transform var(--flip-duration) ease;
+  transition: transform var(--flip-duration) ease, left 0.5s ease, top 0.5s ease, z-index 0.5s ease; /* Transiciones adicionales para movimiento */
   border-radius: var(--card-radius);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   z-index: 10;
@@ -38,21 +38,41 @@
   background-repeat: no-repeat;
   background-position: center;
 }
-
+/* Estado volteado: boca abajo (reverso visible) - Cuando tiene la clase 'flipped' */
 .card.flipped {
-  transform: rotateY(0deg); /* La carta se voltea para mostrar su reverso */
+  transform: rotateY(180deg); /* La carta se voltea para mostrar su reverso */
 }
-
+/* Frente de la carta (siempre orientado hacia adelante) */
 .card-front {
   background-color: white;
   transform: rotateY(0deg);
 }
 
-
+/* Reverso de la carta (girado para estar en la parte trasera) */
 .card-back {
   background-color: white;
   transform: rotateY(180deg);
 }
+
+/* Nuevos estilos para clicabilidad de las cartas */
+.card.clickable-card {
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.7); /* Brillo amarillo para cartas clicables */
+    border: 2px solid yellow;
+}
+
+.card.clickable-card:hover {
+    transform: scale(1.05) rotateY(0deg); /* Pequeño zoom al pasar el ratón */
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.9);
+}
+
+.card.unclickable-card {
+    cursor: not-allowed;
+    opacity: 0.6; /* Un poco más transparente */
+    box-shadow: none;
+    border: none;
+}
+
 
 /* Montones */
 .stack {
@@ -67,6 +87,7 @@
   background: rgba(0, 0, 0, 0.2);
   border-radius: var(--card-radius);
   z-index: 0;
+  transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, opacity 0.3s ease;
 }
 
 .stack::after {
@@ -77,7 +98,7 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.stack.active {
+.stack.active { /* Esto puede usarse para el stack de origen/destino si lo deseas */
   border: 2px solid gold;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
   background: rgba(255, 215, 0, 0.1);
@@ -88,6 +109,29 @@
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
 }
 
+/* Nuevo estilo para stacks deshabilitados */
+.stack.disabled-stack {
+    opacity: 0.4;
+    pointer-events: none; /* Deshabilita cualquier interacción con el stack mismo si no es el activo */
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+}
+
+/* Nuevo estilo para el stack de destino activo (si quieres resaltarlo) */
+.stack.active-target-stack {
+    border: 2px solid #00BFFF; /* Un color azul claro o el que prefieras */
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+    background: rgba(0, 191, 255, 0.1);
+}
+
+/* Stack central (K) - Se mantienen aquí porque interactúan con las cartas */
+/* NOTA: Estos estilos específicos del stack 13 se mueven al HEAD del HTML para anular los generales si es necesario */
+/* #stack13 {
+    background: rgba(255,215,0,0.1);
+    border: 2px solid gold;
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+    font-size: 2.2rem;
+} */
 
 /* Animaciones */
 .card-shuffle {
