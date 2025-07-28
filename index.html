@@ -5,23 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poker en Espiral</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Estilos personalizados para los modales que Tailwind no cubre directamente */
+        .modal-overlay {
+            position: fixed; /* Usar fixed para que cubra toda la ventana */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Alto z-index para asegurar que esté encima de todo */
+            opacity: 1;
+            pointer-events: auto;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-content-wrapper {
+            transform: scale(1);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        .modal-overlay.hidden .modal-content-wrapper {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+
+        /* Estilos específicos para el personaje del oráculo si no tienes imagen redonda */
+        .oracle-character img {
+            border-radius: 9999px; /* Tailwind's full rounded */
+            border: 5px solid gold;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        }
+        /* Ajuste para el stack 13 si los estilos base de stack no son adecuados */
+        #stack13 {
+            background: rgba(255,215,0,0.1);
+            border: 2px solid gold;
+            box-shadow: 0 0 15px rgba(255,215,0,0.5);
+            font-size: 2.2rem;
+            color: rgba(255,255,255,0.8); /* Asegurar que el texto sea visible */
+        }
+    </style>
 </head>
 <body class="flex flex-col items-center py-8 bg-gradient-to-b from-green-900 to-green-950 min-h-screen">
     <div class="max-w-6xl w-full px-4">
-        
-        <!-- <p class="text-center text-xl mb-6 text-green-200">Juego de Solitario con Baraja de Poker</p> -->
-        
         <div class="flex flex-col lg:flex-row gap-8 items-center">
             <div class="w-full lg:w-2/3 flex justify-center">
-                
-                <div class="relative rounded-2xl bg-green-800 border-8 border-amber-800 shadow-lg" 
+                <div id="gameScreen" class="relative rounded-2xl bg-green-800 border-8 border-amber-800 shadow-lg"
                      style="width: 1250px; height:710px;">
                     <div id="gameArea" class="relative w-full h-full"></div>
                 </div>
             </div>
-            
+
             <div class="w-full lg:w-1/3 p-6 rounded-2xl bg-black bg-opacity-30 backdrop-blur-sm">
                 <div class="mb-6">
                     <h1 class="text-4xl md:text-5xl text-center mb-2 font-serif font-bold text-white">Oráculo</h1>
@@ -49,7 +92,7 @@
                         </li>
                     </ul>
                 </div>
-                
+
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold mb-3 text-white">Controles</h2>
                     <div class="grid grid-cols-3 gap-3">
@@ -65,30 +108,63 @@
                     </div>
                 </div>
                 <div id="gameStatus" class="text-center p-4 rounded-lg bg-black bg-opacity-40">
-                <div class="flex justify-center gap-6 mb-3">
-                    <div class="bg-gray-800 px-4 py-2 rounded-lg">
-                        <span class="text-gray-400 text-sm">Tiempo</span>
-                        <div id="timerDisplay" class="text-white font-mono text-xl">00:00:00</div>
+                    <div class="flex justify-center gap-6 mb-3">
+                        <div class="bg-gray-800 px-4 py-2 rounded-lg">
+                            <span class="text-gray-400 text-sm">Tiempo</span>
+                            <div id="timerDisplay" class="text-white font-mono text-xl">00:00:00</div>
+                        </div>
+                        <div class="bg-gray-800 px-4 py-2 rounded-lg">
+                            <span class="text-gray-400 text-sm">Movimientos</span>
+                            <div id="movesDisplay" class="text-white font-mono text-xl">0</div>
+                        </div>
                     </div>
-                    <div class="bg-gray-800 px-4 py-2 rounded-lg">
-                        <span class="text-gray-400 text-sm">Movimientos</span>
-                        <div id="movesDisplay" class="text-white font-mono text-xl">0</div>
-                    </div>
+                    <div id="gameStatus" class="text-center p-4 rounded-lg bg-black bg-opacity-40">
+                        <p id="statusText" class="text-xl text-white mb-2">Preparado para comenzar</p>
+                        </div>
                 </div>
-                <div id="gameStatus" class="text-center p-4 rounded-lg bg-black bg-opacity-40">
-                    <p id="statusText" class="text-xl text-white mb-2">Preparado para comenzar</p>
-                     <div id="winMessage" class="hidden mt-3 p-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg text-white">
-        <h3 class="text-2xl font-bold">¡Felicidades!</h3>
-        <p>Has completado todos los montones</p>
-        <p class="mt-2">Tiempo: <span id="finalTime"></span> - Movimientos: <span id="finalMoves"></span></p>
-    </div>
-    
-    <div id="loseMessage" class="hidden mt-3 p-3 bg-gradient-to-r from-red-500 to-red-700 rounded-lg text-white">
-        <h3 class="text-2xl font-bold">¡Juego terminado!</h3>
-        <p>El Rey bloqueó el juego</p>
-    </div>
-</div>
             </div>
+        </div>
+    </div>
+
+    <div id="oracleIntroModal" class="modal-overlay">
+        <div class="modal-content-wrapper bg-gradient-to-br from-green-700 to-emerald-900 p-8 rounded-2xl shadow-xl text-center max-w-lg mx-4">
+            <div class="oracle-character mb-8">
+                <img src="assets/oracle/oracle_character2.png" alt="El Oráculo" class="w-48 h-48 mx-auto object-cover rounded-full border-4 border-yellow-400 shadow-lg">
+            </div>
+            <div class="oracle-dialogue">
+                <h2 class="text-4xl font-bold text-yellow-300 mb-6 text-shadow-lg">¿Qué deseas conocer?</h2>
+                <input type="text" id="userQuestion" placeholder="Escribe tu pregunta aquí (ej. ¿Ganaré la lotería?)"
+                       class="w-full p-4 mb-4 rounded-lg border-2 border-gray-600 bg-gray-800 text-white text-lg focus:border-yellow-500 focus:outline-none placeholder-gray-400">
+                <p class="text-sm text-gray-300 mb-6">Solo preguntas de sí o no.</p>
+                <button id="startGameButton"
+                        class="bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 text-xl font-semibold rounded-lg shadow-lg transition transform hover:scale-105 active:scale-95">
+                    Preguntar al Oráculo y Jugar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal-overlay hidden">
+        <div class="modal-content-wrapper bg-gradient-to-br from-green-600 to-emerald-800 p-8 rounded-2xl shadow-xl text-center max-w-lg mx-4 text-white">
+            <h2 class="text-5xl font-bold text-yellow-300 mb-4 text-shadow-lg">¡Victoria!</h2>
+            <p class="text-2xl font-semibold text-green-200 mb-6" id="oracleWinAnswer">La respuesta a tu pregunta es SÍ</p>
+            <p class="text-lg mb-2">Tiempo: <span id="finalTime" class="font-mono text-xl"></span></p>
+            <p class="text-lg mb-6">Movimientos: <span id="finalMoves" class="font-mono text-xl"></span></p>
+            <button id="playAgainWin"
+                    class="bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 text-xl font-semibold rounded-lg shadow-lg transition transform hover:scale-105 active:scale-95">
+                Jugar de Nuevo
+            </button>
+        </div>
+    </div>
+
+    <div id="loseModal" class="modal-overlay hidden">
+        <div class="modal-content-wrapper bg-gradient-to-br from-red-700 to-red-900 p-8 rounded-2xl shadow-xl text-center max-w-lg mx-4 text-white">
+            <h2 class="text-5xl font-bold text-yellow-300 mb-4 text-shadow-lg">¡Juego Terminado!</h2>
+            <p class="text-2xl font-semibold text-red-200 mb-6" id="oracleLoseAnswer">Lamentablemente la respuesta es NO</p>
+            <button id="playAgainLose"
+                    class="bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 text-xl font-semibold rounded-lg shadow-lg transition transform hover:scale-105 active:scale-95">
+                Jugar de Nuevo
+            </button>
         </div>
     </div>
 
